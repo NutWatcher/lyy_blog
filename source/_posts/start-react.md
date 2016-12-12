@@ -4,9 +4,12 @@ date: 2016-12-12 15:32:47
 tags: [asset,React]
 ---
 
->第一步：构建一个react开发环境
+通过 react.js、七牛云存储 实现一个具有管理功能的静态页面
+第一步：构建一个react开发环境
 
 <!--more-->
+
+---
 
 ## 关于npm版本
 
@@ -17,9 +20,9 @@ tags: [asset,React]
 
 ## 安装react
 
-通过安装create-react-app脚手架在进行安装
+通过安装create-react-app脚手架来进行安装
 
-```
+```Bash
 npm install -g create-react-app  
 create-react-app hello-world
 cd hello-world
