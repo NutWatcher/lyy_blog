@@ -3,7 +3,7 @@ title: React实战(二)
 date: 2016-12-16 22:36:56
 tags: [asset,React,Webpack]
 ---
-
+![title](http://of6m03mmi.bkt.clouddn.com/what-is-webpack-1.png)
 通过 react.js、七牛云存储 实现一个具有管理功能的静态页面  
 第一步：构建一个react开发环境  
 第二步：使用webpack打包项目
@@ -57,7 +57,10 @@ module.exports = {
   },
   module: {
     loaders: [
-      {test: /\.css$/, loader: 'style!css'},
+      {
+        test: /\.css$/,
+        loader: 'style!css'
+      },
       {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,
