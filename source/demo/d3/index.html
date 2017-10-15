@@ -1,0 +1,230 @@
+---
+layout: false
+---
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+    .node circle {
+       // fill: #999;
+    }
+
+    .node text {
+        font: 15px sans-serif;
+    }
+    text.action{
+        fill: #ffffff;
+        font: 25px sans-serif;
+
+    }
+    text.action:hover{
+        cursor: pointer;
+    }
+    .node--internal circle {
+       // fill: #555;
+    }
+
+    circle.blue {
+        fill: #00aeff;
+        stroke: #00aeff;
+        stroke-opacity: 0.4;
+        stroke-width: 5.5px;
+    }
+    circle.green {
+        fill: #00ffd1;
+        stroke: #00ffd1;
+        stroke-opacity: 0.4;
+        stroke-width: 5.5px;
+    }
+    circle.purple {
+        fill: #740aff;
+        stroke: #740aff;
+        stroke-opacity: 0.4;
+        stroke-width: 5.5px;
+    }
+    .node--internal text {
+        text-shadow: 0 1px 0 #fff, 0 -1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff;
+    }
+
+    .link {
+        fill: none;
+        stroke: #555;
+        stroke-opacity: 0.4;
+        stroke-width: 1.5px;
+    }
+    H3{
+        padding-left: 50px;
+    }
+</style>
+<body>
+    <H3>简单DEMO，很多扩展功能没有写</H3>
+</body>
+<svg width="960" height="900"></svg>
+<script src="//d3js.org/d3.v4.min.js"></script>
+<script src="//cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+<script>
+    var svg = d3.select("svg"),
+        width = +svg.attr("width"),
+        height = +svg.attr("height"),
+        g = svg.append("g").attr("transform", "translate(" + width / 2 + "," + (height / 2 + 20) + ")");
+    var stratify = d3.stratify()
+        .parentId(function (d) {
+            return d.id.substring(0, d.id.lastIndexOf("."));
+        });
+    var cluster = d3.cluster()
+        .size([360, width / 2 - 220]);
+    function project(x, y) {
+        var angle = (x - 90) / 180 * Math.PI, radius = y;
+        return [radius * Math.cos(angle), radius * Math.sin(angle)];
+    }
+    function render() {
+        if (window.store == null){
+            alert("没有获取数据");
+            return ;
+        }
+
+        var root = window.store;
+        for(var i = 0 ; i < root.children.length  ; i ++){
+            for(var j = 0 ; j < window.filter.length ; j ++){
+                if (root.children[i].data.value == window.filter[j]){
+                    root.children[i].children = null;
+                }
+            }
+        }
+        cluster(root);
+        console.log(root.descendants());
+        var link = g.selectAll(".link")
+            .data(root.descendants().slice(1))
+            .enter().append("path")
+            .attr("class", "link")
+            .attr("d", function (d) {
+                return "M" + project(d.x, d.y)
+                    + "C" + project(d.x, (d.y + d.parent.y) / 2)
+                    + " " + project(d.parent.x, (d.y + d.parent.y) / 2)
+                    + " " + project(d.parent.x, d.parent.y);
+            });
+        var node = g.selectAll(".node")
+            .data(root.descendants())
+            .enter().append("g")
+            .attr("class", function (d) {
+                return "node" + (d.children ? " node--internal" : " node--leaf");
+            })
+            .attr("transform", function (d) {
+                return "translate(" + project(d.x, d.y) + ")";
+            });
+        node.append("circle")
+            .attr("r", 10)
+            .style("fill", function (d) {
+                if (d.depth != 2 ){
+                    return "";
+                }
+                if (d.parent.id.indexOf("对外投资") > 0 ){
+                    return "#00ffd1";
+                }
+                return "#740aff";
+            })
+            .attr("class", function (d) {
+                if (d.depth == 0 ){
+                    return "blue";
+                }
+                else if (d.depth == 1 ){
+                    if (d.id.indexOf("对外投资") > 0 ){
+                        return "green";
+                    }
+                    return "purple";
+                }
+                return "";
+            });
+        node.append("text")
+            .attr("class", "action")
+            .text(function (d) {
+                if (d.depth == 1){
+                    return "＋";
+                }
+                return "";
+            })
+            .attr("node-data", function (d) {
+                return d.data.value;
+            })
+            .attr("dy", "0.31em")
+            .attr("dx", "-0.5em");
+        node.append("text")
+            .attr("dy", "0.31em")
+            .attr("dy", function (d) {
+                if (d.depth == 0 ){
+                    return "-1em";
+                }
+                return "0.31em";
+            })
+            .attr("x", function (d) {
+                if (d.depth == 0 ){
+                    return "0";
+                }
+                return d.x < 180 === !d.children ? 16 : -16;
+            })
+            .style("text-anchor", function (d) {
+                if (d.depth == 0 ){
+                    return "middle";
+                }
+                return d.x < 180 === !d.children ? "start" : "end";
+            })
+            .style("fill", function (d) {
+                if (d.depth == 0 ){
+                    return "#00aeff";
+                }
+                else if (d.depth == 1 ){
+                    if (d.id.indexOf("对外投资") > 0 ){
+                        return "#00ffd1";
+                    }
+                    return "#740aff";
+                }
+                return "black";
+            })
+            .attr("transform", function (d) {
+                if (d.depth == 0 ){
+                    return "";
+                }
+                return "rotate(" + (d.x < 180 ? d.x - 90 : d.x + 90) + ")";
+            })
+            .text(function (d) {
+                return d.id.substring(d.id.lastIndexOf(".") + 1);
+            });
+        bindAction();
+    }
+    function bindAction() {
+        $('.action').on("click",function () {
+            console.log($(this).attr('node-data'));
+            var value = $(this).attr('node-data');
+            var flag = false ;
+            for (var i = 0 ; i < window.filter.length ; i ++){
+                if (window.filter[i] == value){
+                    window.filter.splice(i,1);
+                    flag = true;
+                    break;
+                }
+            }
+            if (flag == false) {
+                window.filter.push(value);
+            }
+            console.log(window.filter);
+            getCSV(render);
+        })
+    }
+    function getCSV(cb) {
+        d3.csv("flare.csv", function (error, data) {
+            if (error) throw error;
+            var root = stratify(data)
+                .sort(function (a, b) {
+                    return a.height - b.height || a.id.localeCompare(b.id);
+                });
+            window.store = root;
+            $('g').empty();
+            console.log(root);
+            cb();
+        });
+    }
+    $(function () {
+        window.filter = [];
+        getCSV(render);
+    })
+</script>
